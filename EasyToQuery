@@ -1,0 +1,188 @@
+({
+    doinit_helper : function(c,e,h) {
+        var action=c.get("c.getAllObject_Apex");
+        action.setCallback(this,function(response){
+            var state = response.getState();
+            if(state =='SUCCESS'){
+                var storedResponse = response.getReturnValue();
+                if(!$A.util.isEmpty(storedResponse.ObjectNameListWrap) && storedResponse.ObjectNameListWrap != undefined){
+                    
+                    var objectNameListDup = storedResponse.ObjectNameListWrap.sort(function(a, b) {
+                        var nameA = a.label.toUpperCase(); // ignore upper and lowercase
+                        var nameB = b.label.toUpperCase(); // ignore upper and lowercase
+                        if (nameA < nameB) {
+                            return -1;
+                        }
+                        if (nameA > nameB) {
+                            return 1;
+                        }
+                        
+                        // names must be equal
+                        return 0;
+                    });
+                    
+                    c.set("v.objectNameList",objectNameListDup);
+                }
+            }
+        });
+        $A.enqueueAction(action);
+    },
+    getFieldName_helper : function(c,e,h,selectedvalue){
+        
+        var action=c.get("c.getAllFields_Apex"); 
+        action.setParams({
+            selectedObj : selectedvalue
+        });
+        action.setCallback(this,function(response){
+            var state = response.getState();
+            console.log('state--->' + state);
+            if(state =='SUCCESS'){
+                var storedResponse = response.getReturnValue();
+                if(!$A.util.isEmpty(storedResponse.FieldsNameOptionListWrap) && storedResponse.FieldsNameOptionListWrap != undefined){
+                    c.set("v.optionsDualList",storedResponse.FieldsNameOptionListWrap);
+                }
+                if(!$A.util.isEmpty(storedResponse.FieldlabelListwrap) && storedResponse.FieldlabelListwrap != undefined){
+                    c.set("v.FieldlabelListwrap",storedResponse.FieldlabelListwrap); 
+                }
+            }
+        });
+        $A.enqueueAction(action);
+    },
+    getRecords_helper : function(c,e,h,selectedOptionValue){
+        if(!$A.util.isEmpty(selectedOptionValue) && selectedOptionValue != undefined){
+            var objName = c.find("objectname").get("v.value");
+            var action=c.get("c.getAllFieldsQuery"); 
+            action.setParams({
+                selectedFields : JSON.stringify(selectedOptionValue),
+                selectedObject : c.find("objectname").get("v.value")
+            });
+            action.setCallback(this,function(response){
+                var state = response.getState(); 
+                if(state =='SUCCESS'){
+                    var storedResponse = response.getReturnValue();
+                    console.log('storedResponse-->' + JSON.stringify(storedResponse));
+                    if(!$A.util.isEmpty(storedResponse) && storedResponse != null){
+                        c.set("v.objectName",objName);
+                        c.set("v.mydata",storedResponse);  
+                        c.set("v.filteredData", storedResponse); 
+                        c.set("v.myselectedData",storedResponse);
+                        h.getselectedRecords(c,e,h,10);
+                    }
+                    
+                }
+            });
+            $A.enqueueAction(action);    
+        }
+    },
+    editRecord_Helper : function(c,e,h,recordId,name){
+        c.set("v.recordId",recordId);
+        c.set("v.Name",name);
+        c.set("v.isEditModel",true);
+        
+    },
+    deleteRecord_Helper : function(c, e, h, recordId){
+        
+    },
+    getselectedRecords : function(c,e,h,noofRecords){
+        console.log('noofRecords--->' + noofRecords);
+        var myselectedData = c.get("v.myselectedData");
+        var selectedRecordsList =[];
+        if(!$A.util.isEmpty(myselectedData)&& myselectedData != undefined){
+            for(var i=0;i<noofRecords; i++){
+                if(i < myselectedData.length ){
+                    selectedRecordsList.push(myselectedData[i]);
+                }else{
+                    break;
+                }
+                
+            }
+            if(!$A.util.isEmpty(selectedRecordsList)&& selectedRecordsList != undefined){
+                c.set("v.mydata",selectedRecordsList);
+            }
+        }
+    },
+    nextRowList_helper : function(c,e,h,selectedListView){
+        var myselectedData = c.get("v.myselectedData");
+        var mydataDup = [];
+        if(myselectedData != undefined && myselectedData.length > 0){
+            for(var i=selectedListView; i<selectedListView*2; i++){
+                if(i<myselectedData.length){
+                    mydataDup.push(myselectedData[i]);
+                }else{
+                    break;
+                }
+            }
+        }
+        if(mydataDup != undefined && !$A.util.isEmpty(mydataDup)){
+            c.set("v.mydata",mydataDup);
+        }
+        
+    },
+    previousRowList_helper : function(c,e,h,selectedListView){
+        var myselectedData = c.get("v.myselectedData");
+        var mydataDup = [];
+        if(myselectedData != undefined && myselectedData.length > 0){
+            for(var i=selectedListView; i>0; i--){
+                if(i<myselectedData.length){
+                    mydataDup.push(myselectedData[i]);
+                }
+            }
+        }
+        if(mydataDup != undefined && !$A.util.isEmpty(mydataDup)){
+            c.set("v.mydata",mydataDup);
+        }
+    },
+    createSingleRecords_helper : function(c,e,h,selectedObj){
+        console.log('selectedObj---->>>' + selectedObj);
+    },
+    downloadCS_Helper : function(c,e,h,objectRecords){
+		var csvStringResult, counter, columnDivider, lineDivider;
+       
+        // check if "objectRecords" parameter is null, then return from function
+        if (objectRecords == null || !objectRecords.length) {
+            return null;
+         }
+        // store ,[comma] in columnDivider variabel for sparate CSV values and 
+        // for start next line use '\n' [new line] in lineDivider varaible  
+        columnDivider = ',';
+        lineDivider =  '\n';
+ 
+        // in the keys valirable store fields API Names as a key 
+        // this labels use in CSV file header  
+        var mycolumns = c.get("v.mycolumns");
+        var keys = [];
+        if(mycolumns != undefined && !$A.util.isEmpty(mycolumns)){
+            for(var i=0; i<mycolumns.length; i++){
+                keys.push(mycolumns[i].fieldName.toUpperCase());
+            }
+        }
+        
+        console.log('keys-->>>' + JSON.stringify(keys));
+        console.log('objectRecords-->>>' + JSON.stringify(objectRecords));
+        csvStringResult = '';
+        csvStringResult += keys.join(columnDivider);
+        csvStringResult += lineDivider;
+ 
+        for(var i=0; i < objectRecords.length; i++){   
+            counter = 0;
+           
+             for(var sTempkey in keys) {
+                var skey = keys[sTempkey] ;  
+ 
+              // add , [comma] after every String value,. [except first]
+                  if(counter > 0){ 
+                      csvStringResult += columnDivider; 
+                   }   
+               
+               csvStringResult += '"'+ objectRecords[i][skey]+'"'; 
+               
+               counter++;
+ 
+            } // inner for loop close 
+             csvStringResult += lineDivider;
+          }// outer main for loop close 
+       
+       // return the CSV formate String 
+        return csvStringResult;    
+    }
+})
