@@ -1,0 +1,179 @@
+<aura:component controller="EasyToQueryController" description="EasyToQuery" implements="force:appHostable,flexipage:availableForAllPageTypes" access="global" >
+    
+    <aura:attribute name="objectNameList" type="List" />
+    
+    <aura:attribute name="optionsDualList" type="List" />
+    <aura:attribute name="selectedFields" type="String" /> 
+    <aura:attribute name="ObjectLabel" type="String" />
+    <aura:attribute name="selectedLabelApi" type="String[]" />
+    <aura:attribute name="mydata" type="Object"/>
+    <aura:attribute name="myselectedData" type="Object"/>
+    <aura:attribute name="filteredData" type="List" />
+    <aura:attribute name="selectedFieldNameList" type="List" />
+    <aura:attribute name="mycolumns" type="EasyToQueryControllerWrapper.Fieldlabel[]"/>
+    <aura:attribute name="FieldlabelListwrap" type="EasyToQueryControllerWrapper.Fieldlabel[]"/> 
+    <aura:attribute name="getButtonLabel" type="String" default="Get Records"/>
+    <aura:attribute name="isSerialNo" type="boolean" default="false"/>
+    
+    <aura:attribute name="isEditModel" type="boolean" default="false"/>
+    <aura:attribute name="recordId" type="String" />
+    <aura:attribute name="Name" type="String" />
+    <aura:attribute name="objectName" type="String" />
+    <aura:attribute name="filter" type="String" />
+    
+    <aura:attribute name="objectListCreate" type="List" access="public"/>
+    <aura:attribute name="isCreateOtherObject" type="boolean" default="false"/>
+    
+    <aura:handler name="init" value="{! this }" action="{! c.doinit }"/> 
+    
+    <aura:method name="getRecords" />
+    
+    <lightning:tabset variant="scoped">
+        <lightning:tab label="Get Records">
+            <div class="c-container">
+                
+                <lightning:layout >
+                    <lightning:layoutItem  size="5">
+                        <lightning:combobox aura:id="objectname" name="" label="ObjectName" value="" required="true" options="{! v.objectNameList }" onchange="{! c.onChangeObject }"/>
+                    </lightning:layoutItem>
+                </lightning:layout>
+                <lightning:layout >
+                    <lightning:layoutItem size="12">
+                        <lightning:dualListbox name="languages"  
+                                               label= "Fields Name" 
+                                               sourceLabel="Available" 
+                                               selectedLabel="Selected" 
+                                               fieldLevelHelp="Fields of selected object" 
+                                               options="{!v.optionsDualList}" 
+                                               onchange="{! c.handleChangeDualList }"/> 
+                    </lightning:layoutItem>
+                </lightning:layout>
+                <lightning:layout class="slds-m-top_x-small">
+                    <lightning:layoutItem size="12">
+                        <lightning:button variant="brand" label="{!v.getButtonLabel}" onclick="{!c.getRecords}" />
+                    </lightning:layoutItem>
+                </lightning:layout>
+                <lightning:layout class="slds-m-top_x-small">
+                    <lightning:layoutItem size="4" class="left-align">
+                        <lightning:select name="List Views" label="List Views" aura:id="selectedFieldNamerecordView" onchange="{!c.listViewSelect}">
+                            <option value="">choose one...</option>
+                            <option value="10" selected="true">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>  
+                        </lightning:select>
+                    </lightning:layoutItem>
+                    <lightning:layoutItem size="4" >
+                    </lightning:layoutItem>
+                    <lightning:layoutItem size="4" class="right-align">
+                        <aura:if isTrue="{!v.selectedFieldNameList.length != 0}">
+                            <lightning:select name="Fields To Search" label="Fields To Search" aura:id="selectedFieldName">
+                                <aura:iteration items="{!v.selectedFieldNameList}" var="option"> 
+                                    <option text="{!option.label}" value="{!option.value}" /> 
+                                </aura:iteration>
+                            </lightning:select>
+                        </aura:if>
+                        <lightning:input value="{!v.filter}" lable="Search" placeholder="Search" aura:id="Search" onchange="{!c.filterSearch}"/>
+                    </lightning:layoutItem>
+                    
+                </lightning:layout>
+                <lightning:layout class="slds-m-top_x-small">
+                    <lightning:layoutItem size="12">
+                        <aura:if isTrue="{!v.mycolumns.length != 0}">
+                            <div class="slds-m-top_x-small">
+                                <span class="slds-m-left_x-small"><b>{!v.ObjectLabel}({!v.mydata.length})</b></span>
+                            </div>
+                        </aura:if>
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-m-top_x-small">
+                            <thead>
+                                <tr class="slds-line-height_reset">
+                                    <aura:if isTrue="{!v.isSerialNo}">
+                                        <th class="slds-text-title_caps slds-truncate" scope="col">Sr.No</th>
+                                    </aura:if>
+                                    <aura:iteration items="{!v.mycolumns}" var="item">
+                                        <th class="slds-text-title_caps slds-truncate" scope="col">{!item.label}</th> 
+                                    </aura:iteration>
+                                    <aura:if isTrue="{!v.isSerialNo}">
+                                        <th class="slds-text-title_caps slds-truncate" scope="col">ACTION</th>
+                                    </aura:if>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <aura:iteration items="{!v.mydata}" var="data" indexVar="index">
+                                    <tr class="slds-hint-parent">
+                                        <aura:if isTrue="{!v.isSerialNo}">
+                                            <th>{!index+1}</th>
+                                        </aura:if>
+                                        <aura:iteration items="{!v.selectedLabelApi}" var="col"> 
+                                            <th class="slds-truncate">
+                                                <c:EasyToQueryTable Records="{!data}" fieldName = "{!col}" objectName="{!v.objectName}"/>
+                                            </th>
+                                        </aura:iteration> 
+                                        <th>
+                                            <lightning:buttonMenu aura:id="menuButton" onselect="{! c.handleSelectRecordMenu}" alternativeText="Show menu">
+                                                <lightning:menuItem value="{!join(',', data.ID, 'Edit', data.NAME)}" label="Edit" />
+                                                <lightning:menuItem value="{!join(',', data.ID, 'Delete', data.NAME)}" label="Delete" />  
+                                            </lightning:buttonMenu>
+                                        </th>
+                                    </tr>
+                                </aura:iteration>
+                            </tbody>
+                        </table>
+                    </lightning:layoutItem>
+                </lightning:layout>
+                <aura:if isTrue="{!v.mydata.length > 0}">
+                    <lightning:layout class="slds-m-top_medium slds-p-right_medium slds-p-bottom_medium">
+                        <lightning:layoutItem size="7">
+                            <lightning:button aura:id ="dOWNLOAD" label="Download" onclick="{!c.downloadCS}"/>
+                        </lightning:layoutItem >
+                        <lightning:layoutItem size="2">
+                            <lightning:button aura:id ="previousrowlistbutton" label="Previous" onclick="{!c.nextAndPreviousRowList}"/> 
+                        </lightning:layoutItem>
+                        <lightning:layoutItem size="1">
+                            
+                        </lightning:layoutItem>
+                        <lightning:layoutItem size="2" >
+                            <lightning:button aura:id ="nextrowlistbutton" label="Next" variant="brand" class="slds-float_right" onclick="{!c.nextAndPreviousRowList}"/> 
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </aura:if>
+            </div>
+            
+            <div>
+                <aura:if isTrue="{!v.isEditModel}"> 
+                    <c:RecordEditPopup recordId="{!v.recordId}" Name="{!v.Name}" isEditModel="{!v.isEditModel}" parent="{! this }"/> 
+                </aura:if>
+            </div> 
+        </lightning:tab>
+        <lightning:tab label="Create Records">
+            <div class="slds-box">
+                <div class="slds-grid">
+                    <div class="slds-col slds-size_2-of-12">
+                        <span><a class="anchorButton" value="Account" id="Account" onclick="{!c.createSingleRecords}">Create Account</a></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <span><a class="anchorButton" value="Contact" id="Contact" onclick="{!c.createSingleRecords}">Create Contact</a></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <span><a class="anchorButton" value="Opportunities" id="Opportunities" onclick="{!c.createSingleRecords}">Create Opportunities</a></span>
+                    </div>
+                    <div class="slds-col slds-size_2-of-12">
+                        <span><a class="anchorButton" value="Others" id="Others" onclick="{!c.createSingleRecords}">Others</a></span>
+                    </div>
+                    <div class="slds-col slds-size_4-of-12">
+                        
+                    </div>
+                </div>
+                <div>
+                    <aura:if isTrue="{!v.isCreateOtherObject}">
+                    <lightning:select name="obects_created" label="Select Object" aura:id="obects_created" onchange="{!c.selectedObject_create}">
+                        <aura:iteration items="{!v.objectListCreate}" var="option">
+                            <option text="{!option.label}" value="{!option.value}" /> 
+                        </aura:iteration>
+                    </lightning:select>
+                  </aura:if>
+                </div>
+            </div>
+        </lightning:tab>
+    </lightning:tabset>
+</aura:component>
