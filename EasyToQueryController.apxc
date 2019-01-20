@@ -1,0 +1,111 @@
+public class EasyToQueryController {
+    
+	@auraEnabled
+    Public static EasyToQueryControllerWrapper getAllObject_Apex(){
+        try{
+            Map<String, Schema.SObjectType> objectDescibe = EasyToQueryController.getObjectDescribe(); 
+            List<String> objectList = new List<String>();
+            EasyToQueryControllerWrapper EasyToQueryControllerWrapperObj = new EasyToQueryControllerWrapper();
+            objectDescibe = Schema.getGlobalDescribe();
+            objectList.addAll(objectDescibe.keyset());
+            
+            for(String str:objectList){
+                Schema.DescribeSObjectResult myObj = objectDescibe.get(str).getDescribe(); 
+                if(myObj.isCreateable() && myObj.isQueryable()){ 
+                    EasyToQueryControllerWrapper.ObjectNameList Wrapobj = new EasyToQueryControllerWrapper.ObjectNameList();
+                    Wrapobj.label = String.valueOf(objectDescibe.get(str).getDescribe().getLabel()); 
+                    Wrapobj.value = String.valueOf(objectDescibe.get(str).getDescribe().getName()); 
+                    EasyToQueryControllerWrapperObj.ObjectNameListWrap.add(Wrapobj);
+                }
+            }
+            if(EasyToQueryControllerWrapperObj.ObjectNameListWrap != null && EasyToQueryControllerWrapperObj.ObjectNameListWrap.size() > 0){ 
+                return EasyToQueryControllerWrapperObj;  
+            }
+            return null;
+        }catch(Exception ex){
+            System.debug('Exception is--=>' + ex.getMessage() + 'in line number--->' + ex.getLineNumber());
+        }  
+        return null;
+    }
+   @auraEnabled
+   public static EasyToQueryControllerWrapper getAllFields_Apex(String selectedObj){
+       Map<String, Schema.SObjectType> objectDescibeMap = EasyToQueryController.getObjectDescribe(); 
+       Map<String,Schema.SObjectField> fieldsDescribeMap = objectDescibeMap.get(selectedObj).getDescribe().fields.getMap();
+       EasyToQueryControllerWrapper EasyToQueryControllerWrapperOBJ = new EasyToQueryControllerWrapper();
+       List<String> fields = new List<String>();
+       
+       EasyToQueryControllerWrapperOBJ.FieldlabelListwrap =  EasyToQueryController.createTableLabel(fieldsDescribeMap).FieldlabelListwrap;         
+       system.debug('EasyToQueryControllerWrapperOBJ.FieldlabelListwrap-->' + EasyToQueryControllerWrapperOBJ.FieldlabelListwrap);
+       fields.addAll(fieldsDescribeMap.keySet());
+       fields.sort();
+       if(fields != null && fields.size() > 0){
+           for(String str:fields){
+               DescribeFieldResult fieldDescribe = fieldsDescribeMap.get(str).getDescribe(); 
+               if(fieldDescribe.isAccessible() && fieldDescribe.isCreateable() ){
+                   EasyToQueryControllerWrapper.FieldsNameList ob = new EasyToQueryControllerWrapper.FieldsNameList();
+                   ob.label = String.valueOf(fieldsDescribeMap.get(str).getDescribe().getLabel());
+                   ob.value = str;
+                   EasyToQueryControllerWrapperOBJ.FieldsNameOptionListWrap.add(ob); 
+               }
+               
+           }
+       }
+       if(EasyToQueryControllerWrapperOBJ != null){
+            return EasyToQueryControllerWrapperOBJ;
+       }
+       return null; 
+   }
+    @auraEnabled
+    public static List<sobject> getAllFieldsQuery(String selectedFields,String selectedObject){
+        try{
+        List<sobject> mydata = new List<sobject>();
+        List<String> fieldsList= (List<String>)JSON.deserialize(selectedFields, List<String>.class);
+        system.debug('fieldsList-->' + fieldsList);
+        String query = '';
+        query = 'SELECT id ';
+            if(fieldsList != null && fieldsList.size() >0){
+                for(String str: fieldsList){
+                   query = query + ',' + str; 
+                }
+                
+            }
+        query = query + ' FROM ' + selectedObject; 
+        system.debug('query--->' + query);
+        mydata = database.query(query);
+        if(mydata != null && mydata.size() > 0){
+            return mydata;
+        }
+        system.debug('mydata-->' + mydata); 
+        return null;
+        }catch(exception ex){
+            system.debug('exception is-->' + ex.getMessage() + 'in line number-->' + ex.getLineNumber());
+        }
+        return null;
+    }
+    
+    public static Map<String, Schema.SObjectType> getObjectDescribe(){
+        Map<String, Schema.SObjectType> objectDescibe = new Map<String, Schema.SObjectType>();
+        objectDescibe = Schema.getGlobalDescribe();
+        return objectDescibe;
+    }
+    public static EasyToQueryControllerWrapper createTableLabel(Map<String,Schema.SObjectField> fieldsDescribeMap){
+        EasyToQueryControllerWrapper EasyToQueryControllerWrapperObj = new EasyToQueryControllerWrapper();
+        
+        Set <String> fieldApiNameList = new Set <String>();
+        List<Schema.SObjectField> fieldLabelList = new List<Schema.SObjectField>();
+        fieldApiNameList = fieldsDescribeMap.keySet();
+        fieldLabelList.addAll(fieldsDescribeMap.values());
+        for(String str:fieldApiNameList){
+            EasyToQueryControllerWrapper.Fieldlabel obj = new EasyToQueryControllerWrapper.Fieldlabel();
+            obj.fieldName = str;
+            obj.label = String.valueOf(fieldsDescribeMap.get(str).getDescribe().getLabel()); 
+            obj.type = String.valueOf(fieldsDescribeMap.get(str).getDescribe().getType()); 
+            EasyToQueryControllerWrapperObj.FieldlabelListwrap.add(obj);
+        }
+        if(EasyToQueryControllerWrapperObj != null){
+            return EasyToQueryControllerWrapperObj;
+        }
+        return null;
+    }
+             
+}
