@@ -1,0 +1,19 @@
+public class EasyToQueryTableController {
+    @auraEnabled
+    public static List<sObject> getObjectName_Apex(String recordId){
+        try{
+            Id selectedRecordId = Id.valueOf(recordId);
+            String sObjName = selectedRecordId.getSObjectType().getDescribe().getName(); 
+           // string onjectQuery = 'SELECT Id,Name FROM ' + sObjName + ' WHERE Name =: ' + selectedRecordId;
+            List<sObject> sobjList = new List<sObject>();
+            sobjList = Database.query('SELECT Id,Name FROM '+ sObjName + ' WHERE Id =\''+recordId+'\'');
+            System.debug('sobjList--->' + sobjList);
+            if(sobjList != null && sobjList.size() >0){
+                return sobjList;
+            }
+        }catch(Exception ex){
+            system.debug('Exception is--->' + ex.getMessage() + 'in line number--->' + ex.getLineNumber());
+        }
+        return null;
+    }
+}
