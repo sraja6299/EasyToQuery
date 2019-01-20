@@ -1,0 +1,71 @@
+public class public class EasyToQueryControllerWrapper {
+	
+	@auraEnabled  
+    public List<EasyToQueryControllerWrapper.Fieldlabel> FieldlabelListwrap = new List<EasyToQueryControllerWrapper.Fieldlabel>(); 
+    @auraEnabled 
+    public List<EasyToQueryControllerWrapper.FieldsNameList> FieldsNameOptionListWrap = new List<EasyToQueryControllerWrapper.FieldsNameList>(); 
+    @auraEnabled 
+    public List<EasyToQueryControllerWrapper.ObjectNameList> ObjectNameListWrap = new List<EasyToQueryControllerWrapper.ObjectNameList>();
+    
+    public class Fieldlabel{
+    @auraEnabled
+    public string label;
+        
+    @auraEnabled
+    public String fieldName; 
+        
+    @auraEnabled
+    public String type; 
+        
+    }
+    
+    public class FieldsNameList{
+        @auraEnabled
+        public string label;
+        @auraEnabled
+        public string value;
+    }
+    
+    public class ObjectNameList{
+        @auraEnabled
+        public string label;
+        @auraEnabled
+        public string value;
+    }
+
+} {
+	
+	@auraEnabled  
+    public List<EasyToQueryControllerWrapper.Fieldlabel> FieldlabelListwrap = new List<EasyToQueryControllerWrapper.Fieldlabel>(); 
+    @auraEnabled 
+    public List<EasyToQueryControllerWrapper.FieldsNameList> FieldsNameOptionListWrap = new List<EasyToQueryControllerWrapper.FieldsNameList>(); 
+    @auraEnabled 
+    public List<EasyToQueryControllerWrapper.ObjectNameList> ObjectNameListWrap = new List<EasyToQueryControllerWrapper.ObjectNameList>();
+    
+    public class Fieldlabel{
+    @auraEnabled
+    public string label;
+        
+    @auraEnabled
+    public String fieldName; 
+        
+    @auraEnabled
+    public String type; 
+        
+    }
+    
+    public class FieldsNameList{
+        @auraEnabled
+        public string label;
+        @auraEnabled
+        public string value;
+    }
+    
+    public class ObjectNameList{
+        @auraEnabled
+        public string label;
+        @auraEnabled
+        public string value;
+    }
+
+}
